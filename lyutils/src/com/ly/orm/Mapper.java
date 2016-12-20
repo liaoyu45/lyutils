@@ -46,15 +46,6 @@ public class Mapper {
 	public interface ValueGetter extends FuncTT<String, Class<?>, Object> {
 	}
 
-	public static <T> OrignalQuery<T> get(Class<T> cls, String where, String orderby) {
-		OrignalQuery<T> ot = new OrignalQuery<T>();
-		ot.cls = cls;
-		ot.cols = Enm.toString(Mapper.getColumns(cls), ',');
-		ot.where = where;
-		ot.orderby = orderby;
-		return ot;
-	}
-
 	public static <T> ArrayList<String> getColumns(final Class<T> cls) {
 		FuncT<Field, String> getName = new FuncT<Field, String>() {
 
