@@ -1,5 +1,5 @@
 package com.ly.orm;
 
-public @interface Query {
+public @interface Selecting {
 	String name();
 }

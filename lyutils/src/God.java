@@ -7,20 +7,14 @@ import javax.swing.text.DateFormatter;
 
 public class God {
 	public static void main(String[] args) {
-		System.out.println(123132);
-//		System.out.println(new Date());
-		DateFormat format = DateFormat.getTimeInstance();
-		System.out.println(format.format(new Date()));
-		SimpleDateFormat ss = new SimpleDateFormat();
-		String d = ss.format(new Date());
-		System.out.println(d);
-		DateFormatter a = new DateFormatter();
-		String adf = a.getFormat().format(new Date());
-		System.out.println(adf);
-		String vc = Calendar.getInstance().toString();
-		System.out.println(vc);
-		System.out.println(new java.sql.Date(new Date().getTime()));
-		String rr = DateFormat.getDateTimeInstance().format(new Date());
-		System.out.println(rr);
+//		wer(1, 3);
+	}
+
+	static void wer(String q, int... wer) {
+		System.out.println(132);
+	}
+
+	static void wer(String i, int wer, int... oiurew) {
+		System.out.println(84844);
 	}
 }

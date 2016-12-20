@@ -2,6 +2,7 @@ package com.ly.orm;
 
 import java.lang.reflect.Field;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -14,24 +15,24 @@ import com.ly.linq.Pre;
 import com.ly.utils.Cls;
 import com.ly.utils.Text;
 
-public class SQL {
+public class Mapper {
 
 	private static Pre<Field> isColumn = new Pre<Field>() {
 		@Override
 		public boolean check(Field ti) {
-			return ti.getAnnotation(Insert.class) != null;
+			return ti.getAnnotation(Creating.class) != null;
 		}
 	};
 	private static FuncT<Field, Integer> byIndex = new FuncT<Field, Integer>() {
 		@Override
 		public Integer get(Field ti) {
-			return ti.getAnnotation(Insert.class).index();
+			return ti.getAnnotation(Creating.class).index();
 		}
 	};
-	private static FuncT<Field, String> getColumnWithData = new FuncT<Field, String>() {
+	private static FuncT<Field, String> getColumn = new FuncT<Field, String>() {
 		@Override
 		public String get(Field ti) {
-			String desc = ti.getAnnotation(Insert.class).desc();
+			String desc = ti.getAnnotation(Creating.class).desc();
 			if (desc.charAt(0) == ' ') {
 				return desc.substring(1);
 			}
@@ -43,6 +44,30 @@ public class SQL {
 	}
 
 	public interface ValueGetter extends FuncTT<String, Class<?>, Object> {
+	}
+
+	public static <T> OrignalQuery<T> get(Class<T> cls, String where, String orderby) {
+		OrignalQuery<T> ot = new OrignalQuery<T>();
+		ot.cls = cls;
+		ot.cols = Enm.toString(Mapper.getColumns(cls), ',');
+		ot.where = where;
+		ot.orderby = orderby;
+		return ot;
+	}
+
+	public static <T> ArrayList<String> getColumns(final Class<T> cls) {
+		FuncT<Field, String> getName = new FuncT<Field, String>() {
+
+			@Override
+			public String get(Field ti) {
+				String desc = ti.getAnnotation(Creating.class).desc();
+				if (desc.startsWith(" ")) {
+					return desc.substring(1).split(" ")[0];
+				}
+				return ti.getName();
+			}
+		};
+		return Enm.select(Enm.where(cls.getDeclaredFields(), isColumn), getName);
 	}
 
 	public static <T> QueryLoader<T> load(final Class<T> cls) {
@@ -58,7 +83,7 @@ public class SQL {
 				}
 				Field[] fs = cls.getDeclaredFields();
 				for (Field f : fs) {
-					Query anno = f.getAnnotation(Query.class);
+					Selecting anno = f.getAnnotation(Selecting.class);
 					String name = anno == null ? f.getName() : anno.name();
 					Object val = nameToValue.get(name, f.getType());
 					f.setAccessible(true);
@@ -74,35 +99,11 @@ public class SQL {
 		};
 	}
 
-	public static <T> T query(Class<T> cls, FuncTT<String, Class<?>, Object> nameToValue) {
-		T r;
-		try {
-			r = cls.newInstance();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-		Field[] fs = cls.getDeclaredFields();
-		for (Field f : fs) {
-			Query anno = f.getAnnotation(Query.class);
-			String name = anno == null ? f.getName() : anno.name();
-			Object val = nameToValue.get(name, f.getClass());
-			f.setAccessible(true);
-			try {
-				f.set(r, val);
-			} catch (Exception e) {
-				e.printStackTrace();
-				continue;
-			}
-		}
-		return r;
-	}
-
 	public static HashMap<String, Object> getKey(final Object obj) {
 		return Enm.toHashMap(Enm.where(obj.getClass().getDeclaredFields(), new Pre<Field>() {
 			@Override
 			public boolean check(Field t) {
-				Insert insert = t.getAnnotation(Insert.class);
+				Creating insert = t.getAnnotation(Creating.class);
 				return insert != null && insert.desc().contains("key");
 			}
 		}), new FuncT<Field, Pair<String, Object>>() {
@@ -117,7 +118,7 @@ public class SQL {
 					return null;
 				}
 				String k;
-				Insert insert = ti.getAnnotation(Insert.class);
+				Creating insert = ti.getAnnotation(Creating.class);
 				if (insert.desc().startsWith(" ")) {
 					String sub = insert.desc().substring(1);
 					k = sub.substring(0, sub.indexOf(" "));
@@ -180,21 +181,21 @@ public class SQL {
 		return v.toString();
 	}
 
-	public static <T> String getCreateSQL(Class<T> cls) {
+	public static String getCreateSQL(Class<?> cls) {
 		String cols = Enm.toString(Enm.select(Enm.sort(Enm.where(
 				cls.getFields(),
-				isColumn), byIndex), getColumnWithData), ',');
+				isColumn), byIndex), getColumn), ',');
 		if (cols.length() == 0) {
 			return cols;
 		}
 		return String.format("create table %s(%s);", getSqlTableName(cls), cols);
 	}
 
-	private static <T> String getSqlTableName(Class<T> cls) {
+	public static String getSqlTableName(Class<?> cls) {
 		String table;
-		Table tAnno = cls.getAnnotation(Table.class);
+		Creating tAnno = cls.getAnnotation(Creating.class);
 		if (tAnno != null) {
-			table = tAnno.name();
+			table = tAnno.desc();
 		} else {
 			table = cls.getSimpleName();
 		}

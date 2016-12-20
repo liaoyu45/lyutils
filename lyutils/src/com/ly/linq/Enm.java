@@ -19,6 +19,14 @@ public class Enm {
 		return r;
 	}
 
+	public static <T> String toString(T[] source, Object s) {
+		return toString(toList(source), s);
+	}
+
+	public static <T> String toString(T[] source, Object s, FuncT<T, String> mapper) {
+		return toString(toList(source), s, mapper);
+	}
+
 	public static <T> String toString(Iterable<T> source, Object s) {
 		return toString(source, s, null);
 	}
